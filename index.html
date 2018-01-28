@@ -1,0 +1,200 @@
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>The Maze Runenr</title>
+    <!-- <script src="//cdn.jsdelivr.net/phaser/2.2.2/phaser.min.js"></script> -->
+   <script src= "https://cdnjs.cloudflare.com/ajax/libs/phaser-ce/2.10.0/phaser.min.js"></script>
+    <!-- <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style> -->
+</head>
+<body>
+
+<script type="text/javascript">
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 700;
+const OBSTACLE_SPAWN_FREQ = 4;
+const GFX = 'obstacles';
+const GROUP_SPEED = 6;
+
+const randomGenerator = new Phaser.RandomDataGenerator();
+
+const game = new Phaser.Game(GAME_WIDTH, GAME_HEIGHT, Phaser.AUTO, 'Maze-Runner', { preload: preload, create: create, update: update });
+
+function preload() {
+
+    // game.load.image('background','../assets/spookybackground.png');
+    //CREDIT TO Marta Nowaczyk of www.ifu.deviantart.com FOR BACKGROUND//
+    game.load.image('background', '../assets/ground5.png');
+    game.load.spritesheet('characters', '../assets/characters.png', 32, 32);
+    // game.load.spritesheet('items', '../assets/fruitnveg32wh37.png', 32, 32);
+    game.load.spritesheet(GFX, '../assets/rpg indoor.png', 32, 32);
+    game.load.audio('music', ['../assets/epicmusic.mp3', '../assets/epicmusic1.ogg']);
+
+}
+
+let sprite;
+let player;
+let group;
+let cursors;
+let music;
+let background;
+// let obstacles;
+
+function create() {
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.world.setBounds(0, 0, 800, 1000);
+
+    background = game.add.tileSprite(0, 0, 800, 1000, 'background');
+
+    music = game.add.audio('music');
+
+    music.play();
+
+    sprite = game.add.sprite(400, 800, 'characters', 23);
+    player = game.add.sprite(350, 800, 'characters', 46);
+
+    game.physics.arcade.sortDirection = Phaser.Physics.Arcade.RIGHT_LEFT;
+    game.physics.arcade.sortDirection = Phaser.Physics.Arcade.BOTTOM_TOP;
+
+    game.physics.arcade.enable(sprite);
+    game.physics.arcade.enable(player);
+
+    sprite.animations.add('left', [23, 24, 25, 26], 10, true);
+    sprite.animations.add('right', [27, 28, 29, 30], 10, true);
+    sprite.scale.setTo(1.5);
+    
+    player.animations.add('left', [46, 47, 48, 49], 10, true);
+    player.animations.add('right', [50, 51, 52, 53], 10, true);
+    player.scale.setTo(1.5);
+
+    group = game.add.group();
+    // obstacles = game.add.physicsGroup(Phaser.Physics.ARCADE);
+    group = game.add.physicsGroup(Phaser.Physics.ARCADE);
+
+    // for (var i = 0; i < 500; i++)
+    // {
+    //     var c = group.create(game.rnd.integerInRange(64, 800-64), game.rnd.integerInRange(100, 2900), 'items', game.rnd.integerInRange(0));
+    //     // c.name = 'veg' + i;
+    //     // c.body.immovable = true;
+    //     c.body.mass = -100;
+    // }
+
+    // for (var i = 0; i < 20; i++)
+    // {
+    //     //  Here we'll create some chillis which the player can pick-up. They are still part of the same Group.
+    //     var c = group.create(game.rnd.integerInRange(64, 800-64), game.rnd.integerInRange(0, 2000), 'items', 16);
+    //     // c.body.immovable = true;
+    // }
+
+    game.camera.follow(sprite, player);
+
+    cursors = game.input.keyboard.createCursorKeys();
+    upButton = game.input.keyboard.addKey(Phaser.KeyCode.W);
+    downButton = game.input.keyboard.addKey(Phaser.KeyCode.S);
+    leftButton = game.input.keyboard.addKey(Phaser.KeyCode.A);
+    rightButton = game.input.keyboard.addKey(Phaser.KeyCode.D);
+
+}
+
+function update() {
+    handleObstacleActions();
+    randomlySpawnObstacle();
+
+    background.tilePosition.y += 0.5;
+
+    // if (game.physics.arcade.collide(sprite, group, processHandler, this))
+    // {
+    //     // console.log('boom');
+    // }
+
+    game.physics.arcade.collide(sprite, group, processHandler, null, this);
+
+    sprite.body.velocity.x = 0;
+    sprite.body.velocity.y = 0;
+
+    if (cursors.left.isDown)
+    {
+        sprite.body.velocity.x = -200;
+        sprite.animations.play('left');
+    }
+    else if (cursors.right.isDown)
+    {
+        sprite.body.velocity.x = 200;
+        sprite.animations.play('right');
+    }
+
+    if (cursors.up.isDown)
+    {
+        sprite.body.velocity.y = -200;
+    }
+    else if (cursors.down.isDown)
+    {
+        sprite.body.velocity.y = 200;
+    }
+    
+    // if (game.physics.arcade.collide(player, group, processHandler, this))
+    // {
+    //     // console.log('boom');
+    // }
+    game.physics.arcade.collide(player, group, processHandler, null, this);
+
+    player.body.velocity.x = 0;
+    player.body.velocity.y = 0;
+
+    if (leftButton.isDown)
+    {
+        player.body.velocity.x = -200;
+        player.animations.play('left');
+    }
+    else if (rightButton.isDown)
+    {
+        player.body.velocity.x = 200;
+        player.animations.play('right');
+    }
+
+    if (upButton.isDown)
+    {
+        player.body.velocity.y = -200;
+    }
+    else if (downButton.isDown)
+    {
+        player.body.velocity.y = 200;
+    }
+}
+
+function randomlySpawnObstacle() {
+    if(randomGenerator.between(0, OBSTACLE_SPAWN_FREQ) === 0) {
+      let randomX = randomGenerator.between(0, GAME_WIDTH);
+    //   let randomY = randomGenerator.between(GAME_HEIGHT, 0);
+      // randomly picks an x coordinate to spawn enemy //
+      group.add(game.add.sprite(randomX, -24, GFX, 28));
+    }
+  }
+
+function handleObstacleActions() {
+    group.children.forEach( item => item.y += GROUP_SPEED );
+  }
+
+function processHandler (player, veg) {
+    return true;
+}
+
+// function collisionHandler (player, veg) {
+//     //  If the player collides with the chillis then they get eaten :)
+//     //  The chilli frame ID is 17
+//     if (veg.frame === 16)
+//     {
+//         veg.kill();
+//     }
+
+// }
+
+</script>
+
+</body>
+</html>
